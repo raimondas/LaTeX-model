@@ -1,0 +1,2 @@
+Create a LaTeX equation from a model estimated in R. A generic function 
+is intended supporting methods for various types of models.
