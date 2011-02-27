@@ -1,8 +1,9 @@
 .help.ESS <- help
 
 x <- rnorm(100, mean = 2, sd = 0.1)
-y <- -0.65 * x + rnorm(100, sd = 0.01)
-m <- lm(y ~ x)
+z <- runif(100)
+y <- -0.65 * x + 0.75*z + rnorm(100, sd = 0.01)
+m <- lm(y ~ x + z)
 sm <- summary(m)
 
 latex.model <- function(model, file, yname = NULL, xnames = NULL,
@@ -17,32 +18,29 @@ latex.model <- function(model, file, yname = NULL, xnames = NULL,
     nrrows <- 1:dim(smc)[1]
   }
   coeft <- formatC(smc, digits = digits, format = "f")
-  
-  coefs <- coeft[, 1]
-  se <- coeft[, 2]
-  tval <- coeft[, 3]
-  pval <- coeft[, 4]
+  coeft[, 2] <- paste("(", coeft[, 2], ")", sep = "")
+  coeft[, 3] <- paste("[", coeft[, 3], "]", sep = "")
+  coeft[, 4] <- paste("<", coeft[, 4], ">", sep = "")
+  coeft <- t(apply(coeft, 1, formatC, flag = " "))
+  coeft[, -1] <- gsub(" ", "\\\\,", coeft[, -1])
+  colnames(coeft) <- c("est", "se", "tval", "pval")
+  coeft <- coeft[, c("est", signif), drop = FALSE]
   if(is.null(yname)) yname <- as.character(sm$terms)[2]
-  if(is.null(xnames)) xnames <- as.character(sm$terms)[-1:-2]
+  if(is.null(xnames)) {
+    xnames <- unlist(strsplit(as.character(sm$terms)[-1:-2], " [+] "))
+  }
   if(attr(sm$terms, "intercept") == 1) xnames <- c("", xnames)
   xnames <- xnames[nrrows]
-  signl <- lapply(signif, function(x)
-                  as.character(eval(parse(text = x))))
-  names(signl) <- signif
-  signl$se <- formatC(paste("(", signl$se, ")", sep = ""),
-                     digits = digits, flag = "\\ ")
-  signl$pval <- paste("\\{", signl$pval, "\\}", sep = "")
-  signl$tval <- paste("[", signl$tval, "]", sep = "")
-  signl <- signl[signif]
-  p4 <- paste(signl$se, signl$tval, signl$pval, sep = " \\\\ ")
-  p5 <- gsub(" [\\][\\] $", "", p4)
-  p6 <- paste("\\underset{\\substack{", p5, "}}{", coefs, "}", sep = "")
-  p7 <- paste(paste(p6, xnames, sep = ""), collapse = " + ")
-  p8 <- paste(yname, " = ", p7, sep = "")
+  f <- function(x) {
+    z <- paste(x[-1], collapse = " \\\\ ")
+    paste("\\underset{\\substack{", z, "}}{", x[1], "}", collapse = "")
+  }
+  p1 <- paste(apply(coeft, 1, f), xnames, sep = "")
+  p2 <- paste(yname, "=", paste(p1, collapse = "+"))
   cat("\\begin{align*}\n", file = file)
-  cat(p8, "\n", file = file, append = TRUE)
+  cat(p2, "\n", file = file, append = TRUE)
   cat("\\end{align*}", file = file, append = TRUE)
 }
 
 
-latex.model(m, file = "temp.tex", signif = c("se", "tval"))
+latex.model(m, file = "temp.tex", signif = c("se", "pval"))
