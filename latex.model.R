@@ -6,7 +6,11 @@ y <- -0.65 * x + 0.75*z + rnorm(100, sd = 0.01)
 m <- lm(y ~ x + z)
 sm <- summary(m)
 
-latex.model <- function(model, file, yname = NULL, xnames = NULL,
+latex.model <- function(x) {
+  UseMethod("latex.model")
+}
+
+latex.model.lm <- function(model, file, yname = NULL, xnames = NULL,
                         digits = 4, signif = c("se", "tval", "pval"),
                         remins = TRUE, alpha = 0.05) {
   sm <- summary(model)
@@ -36,11 +40,15 @@ latex.model <- function(model, file, yname = NULL, xnames = NULL,
     paste("\\underset{\\substack{", z, "}}{", x[1], "}", collapse = "")
   }
   p1 <- paste(apply(coeft, 1, f), xnames, sep = "")
-  p2 <- paste(yname, "=", paste(p1, collapse = "+"))
+  p2 <- paste(yname, "=", paste(p1, collapse = " + "))
   cat("\\begin{align*}\n", file = file)
   cat(p2, "\n", file = file, append = TRUE)
   cat("\\end{align*}", file = file, append = TRUE)
 }
 
 
-latex.model(m, file = "temp.tex", signif = c("se", "pval"))
+latex.model(m, file = "temp.tex", signif = c("se"),
+            yname = "y_i", xnames = c("x_i", "z_i"))
+
+
+  
