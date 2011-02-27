@@ -16,23 +16,19 @@ latex.model <- function(model, file, yname = NULL, xnames = NULL,
   if(is.null(yname)) yname <- as.character(sm$terms)[2]
   if(is.null(xnames)) xnames <- as.character(sm$terms)[-1:-2]
   if(attr(sm$terms, "intercept") == 1) xnames <- c("", xnames)
-  p1 <- paste(paste(coefs, xnames, sep = ""), collapse = " + ")
-  p2 <- paste(yname, "=", p1, sep = " ")
   signl <- lapply(signif, function(x)
                   as.character(eval(parse(text = x))))
   names(signl) <- signif
-  signl$se <- paste(paste("\\mbox{\\footnotesize(", signl$se, ")}",
-                          sep = ""), collapse = " ")
-  signl$pval <- paste(paste("\\mbox{\\footnotesize\\{", signl$pval,
-                            "\\}}", sep = ""), collapse = " ")
-  signl$tval <- paste(paste("\\mbox{\\footnotesize[", signl$tval,
-                            "]}", sep = ""), collapse = " ")
-  signl <- signl[signif]
-  p3 <- paste(unlist(signl), collapse = "\\\\\n")
+  signl$se <- paste("(", signl$se, ")", sep = "")
+  signl$pval <- paste("\\{", signl$pval, "\\}", sep = "")
+  signl$tval <- paste("[", signl$tval, "]", sep = "")
+  p4 <- paste(signl$se, signl$tval, signl$pval, sep = " \\\\ ")
+  p5 <- gsub(" [\\][\\] $", "", p4)
+  p6 <- paste("\\underset{\\substack{", p5, "}}{", coefs, "}", sep = "")
+  p7 <- paste(paste(p6, xnames, sep = ""), collapse = " + ")
+  p8 <- paste(yname, " = ", p7, sep = "")
   cat("\\begin{align*}\n", file = file)
-  cat(p2, "\\\\\n", p3, "\n", file = file, append = TRUE)
-  #cat(p2, "\\\\\n", ses, "\\\\\n", ts, "\\\\\n", ps, "\n",
-  #    file = file, append = TRUE)
+  cat(p8, "\n", file = file, append = TRUE)
   cat("\\end{align*}", file = file, append = TRUE)
 }
 
